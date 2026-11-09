@@ -1,0 +1,242 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>Охота за жетоном</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Russo+One&family=Rubik:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one narrow column, big tap target first, stats below; works one-handed on a phone next to the game */
+:root{
+  --bg:#EDF3F2; --surface:#FFFFFF; --ink:#0E2A33; --muted:#557079; --line:#CFDDDC;
+  --sea:#0F6E6E; --gold:#B07A0C; --gold-soft:#F6E7C4; --on-gold:#2B1D00;
+  --font-display:"Russo One","Rubik",system-ui,sans-serif;
+  --font-body:"Rubik",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-num:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0B1A20; --surface:#11262E; --ink:#E6F0EE; --muted:#8FA9AE; --line:#21404A;
+  --sea:#4FB3A9; --gold:#E8B84A; --gold-soft:#3A2E12; --on-gold:#1E1500; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1A20; --surface:#11262E; --ink:#E6F0EE; --muted:#8FA9AE; --line:#21404A;
+  --sea:#4FB3A9; --gold:#E8B84A; --gold-soft:#3A2E12; --on-gold:#1E1500; color-scheme:dark}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--font-body);font-size:16px;line-height:1.5}
+.wrap{max-width:520px;margin:0 auto;padding-block:20px 40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:18px}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--font-display);font-weight:400;font-size:1.6rem;margin:0;text-wrap:balance;letter-spacing:.01em}
+.sync{font-size:.8rem;color:var(--muted)}
+.mode{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.mode button{font:inherit;font-size:.88rem;padding:10px 6px;border:0;background:transparent;color:var(--muted);cursor:pointer}
+.mode button+button{border-left:1px solid var(--line)}
+.mode button[aria-pressed="true"]{background:var(--sea);color:var(--bg);font-weight:500}
+.status{font-size:.88rem;color:var(--muted);margin-top:-8px}
+.status b{color:var(--gold);font-weight:500}
+.big{appearance:none;border:0;cursor:pointer;width:100%;border-radius:22px;padding:26px 16px 22px;
+  background:var(--sea);color:var(--bg);display:flex;flex-direction:column;align-items:center;gap:4px;
+  box-shadow:0 6px 0 color-mix(in srgb,var(--sea) 60%,#000);transition:transform .06s,box-shadow .06s}
+.big.hour{background:var(--gold);color:var(--on-gold);box-shadow:0 6px 0 color-mix(in srgb,var(--gold) 55%,#000)}
+.big:active{transform:translateY(4px);box-shadow:0 2px 0 color-mix(in srgb,var(--sea) 60%,#000)}
+.big.hour:active{box-shadow:0 2px 0 color-mix(in srgb,var(--gold) 55%,#000)}
+.big:focus-visible,.mode button:focus-visible,.row button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.big .plus{font-family:var(--font-display);font-size:1.15rem;letter-spacing:.04em;text-transform:uppercase}
+.big .total{font-family:var(--font-num);font-weight:700;font-size:clamp(3rem,16vw,4.6rem);line-height:1;font-variant-numeric:tabular-nums}
+.big .sub{font-size:.85rem;opacity:.85}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row button{flex:1 1 0;min-width:90px;font:inherit;font-size:.95rem;padding:11px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.hint{font-size:.8rem;color:var(--muted);text-align:center;margin-top:-6px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.panel h2{font-size:.75rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:500}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+.stat .v{font-family:var(--font-num);font-weight:700;font-size:1.35rem;font-variant-numeric:tabular-nums}
+.stat .l{font-size:.82rem;color:var(--muted)}
+.meter{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--gold);width:0}
+.note{font-size:.82rem;color:var(--muted);margin:0}
+form{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+label{font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+input{font:inherit;font-family:var(--font-num);padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%;min-width:0;box-sizing:border-box}
+form button{font:inherit;padding:10px 14px;border-radius:8px;border:0;background:var(--sea);color:var(--bg);cursor:pointer}
+.err{color:#C0392B;font-size:.82rem;margin:0}
+@media (max-width:420px){form{grid-template-columns:1fr 1fr}form button{grid-column:1/-1}}
+@media (prefers-reduced-motion:reduce){.big{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Охота за жетоном</h1>
+    <span class="sync" id="sync">Загружаю сохранённый счёт…</span>
+  </header>
+
+  <div class="mode" role="group" aria-label="Какие сундуки сейчас считаются">
+    <button id="m-auto" aria-pressed="true">Авто</button>
+    <button id="m-normal" aria-pressed="false">Обычные</button>
+    <button id="m-hour" aria-pressed="false">Treasure Hour</button>
+  </div>
+  <div class="status" id="status"></div>
+
+  <button class="big" id="add" aria-describedby="hint">
+    <span class="plus" id="addLabel">+1 сундук</span>
+    <span class="total" id="total">3000</span>
+    <span class="sub" id="sessionLine">за эту сессию: 0</span>
+  </button>
+  <div class="hint" id="hint">Пробел или Enter: +1 · Backspace: отменить</div>
+
+  <div class="row">
+    <button id="undo">Отменить последний</button>
+    <button id="add5">+5 сразу</button>
+  </div>
+
+  <section class="panel" aria-labelledby="h-chance">
+    <h2 id="h-chance">Шанс на пиратский жетон</h2>
+    <div class="grid">
+      <div class="stat"><div class="v" id="pct">2,16%</div><div class="l">что жетон уже выпадал хотя бы раз</div></div>
+      <div class="stat"><div class="v" id="toHalf">92 300</div><div class="l">обычных сундуков ещё до шанса 50%</div></div>
+    </div>
+    <div class="meter" aria-hidden="true"><i id="bar"></i></div>
+    <div class="grid">
+      <div class="stat"><div class="v" id="nNormal">3000</div><div class="l">обычных · 1 из 137 500</div></div>
+      <div class="stat"><div class="v" id="nHour">0</div><div class="l">в Treasure Hour · 1 из 91 667</div></div>
+    </div>
+    <p class="note">Шансы со страницы Treasure Hunt на fortnite.gg. Каждый сундук — отдельная попытка: прошлые сундуки не повышают шанс следующего, растёт только общая вероятность.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-time">
+    <h2 id="h-time">Расписание</h2>
+    <div class="grid">
+      <div class="stat"><div class="v" id="nextHour">—</div><div class="l" id="nextHourL">до следующего Treasure Hour</div></div>
+      <div class="stat"><div class="v" id="endLeft">—</div><div class="l">до конца охоты (5 дек, 22:00 МСК)</div></div>
+    </div>
+    <p class="note">Treasure Hour: суббота 22:00–00:00 и воскресенье 05:00–07:00 по Москве. В режиме «Авто» сундуки в эти часы считаются отдельно.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-fix">
+    <h2 id="h-fix">Исправить счёт</h2>
+    <form id="fix" novalidate>
+      <label for="fixNormal">Обычные<input id="fixNormal" inputmode="numeric" value="3000"></label>
+      <label for="fixHour">Treasure Hour<input id="fixHour" inputmode="numeric" value="0"></label>
+      <button type="submit">Сохранить</button>
+    </form>
+    <p class="err" id="fixErr" hidden></p>
+  </section>
+</div>
+
+<script>
+(function(){
+  const P_N = 1/137500, P_H = 1/91667, LN_N = Math.log(1-P_N), LN_H = Math.log(1-P_H);
+  const END = Date.UTC(2026,11,5,19,0,0);
+  let state = {normal:3000, hour:0};
+  let mode = 'auto', session = 0, history = [];
+  let docRef = null, writeTimer = null, writing = false, dirty = false, loaded = false;
+  const $ = id => document.getElementById(id);
+  const fmt = n => Math.round(n).toLocaleString('ru-RU');
+
+  try { const m = localStorage.getItem('chest-mode'); if (m) mode = m; } catch(e){}
+
+  function inTreasureHour(d){
+    const day = d.getUTCDay(), h = d.getUTCHours();
+    return (day===6 && h>=19 && h<21) || (day===0 && h>=2 && h<4);
+  }
+  function nextTreasureHour(now){
+    const t = new Date(now); t.setUTCMinutes(0,0,0);
+    for (let i=0;i<24*8;i++){ t.setUTCHours(t.getUTCHours()+1); if (inTreasureHour(t) && !inTreasureHour(new Date(t-3600000))) return t; }
+    return null;
+  }
+  const hourActive = () => mode==='hour' || (mode==='auto' && inTreasureHour(new Date()));
+  function dur(ms){
+    if (ms<=0) return '0 с';
+    const d=Math.floor(ms/864e5), h=Math.floor(ms%864e5/36e5), m=Math.floor(ms%36e5/6e4), s=Math.floor(ms%6e4/1e3);
+    const p = n => String(n).padStart(2,'0');
+    return d? `${d} д ${p(h)}:${p(m)}:${p(s)}` : `${p(h)}:${p(m)}:${p(s)}`;
+  }
+
+  function render(){
+    const tot = state.normal + state.hour, hot = hourActive();
+    $('total').textContent = fmt(tot);
+    $('sessionLine').textContent = 'за эту сессию: ' + fmt(session);
+    $('add').classList.toggle('hour', hot);
+    $('addLabel').textContent = hot ? '+1 сундук · Treasure Hour' : '+1 сундук';
+    $('add').setAttribute('aria-label', `Добавить сундук. Всего ${tot}`);
+    const logMiss = state.normal*LN_N + state.hour*LN_H;
+    const p = 1 - Math.exp(logMiss);
+    $('pct').textContent = (p*100).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2}) + '%';
+    $('bar').style.width = Math.min(100, p*200) + '%';
+    const rem = (Math.log(0.5) - logMiss)/LN_N;
+    $('toHalf').textContent = rem>0 ? fmt(rem) : 'уже 50%+';
+    $('nNormal').textContent = fmt(state.normal);
+    $('nHour').textContent = fmt(state.hour);
+    ['auto','normal','hour'].forEach(k => $('m-'+k).setAttribute('aria-pressed', String(mode===k)));
+    const now = new Date();
+    $('status').innerHTML = mode==='auto'
+      ? (inTreasureHour(now) ? 'Сейчас идёт <b>Treasure Hour</b>, шанс выше в 1,5 раза.' : 'Сейчас обычное время. Treasure Hour включится сам по расписанию.')
+      : mode==='hour' ? 'Вручную: все сундуки считаются как <b>Treasure Hour</b>.' : 'Вручную: все сундуки считаются как обычные.';
+    if (inTreasureHour(now)) { $('nextHour').textContent = 'идёт'; $('nextHourL').textContent = 'Treasure Hour прямо сейчас'; }
+    else { const n = nextTreasureHour(now); $('nextHour').textContent = n ? dur(n-now) : '—'; $('nextHourL').textContent = 'до следующего Treasure Hour'; }
+    $('endLeft').textContent = dur(END - now);
+  }
+
+  function setSync(t){ $('sync').textContent = t; }
+  function scheduleSave(){
+    dirty = true; setSync('Сохраняю…');
+    clearTimeout(writeTimer); writeTimer = setTimeout(flush, 700);
+  }
+  async function flush(){
+    if (!docRef){ try{ localStorage.setItem('chest-state', JSON.stringify(state)); setSync('Сохранено в этом браузере'); }catch(e){ setSync('Не сохраняется: откройте страницу в claude.ai'); } dirty=false; return; }
+    if (writing) { writeTimer = setTimeout(flush, 400); return; }
+    writing = true; dirty = false;
+    try { await docRef.set({normal:state.normal, hour:state.hour, updated:Date.now()}); setSync(dirty?'Сохраняю…':'Сохранено'); }
+    catch(e){ setSync('Не удалось сохранить, попробую при следующем нажатии'); dirty = true; }
+    finally { writing = false; }
+  }
+
+  function add(n){
+    const key = hourActive() ? 'hour' : 'normal';
+    state[key] += n; session += n; history.push([key,n]); if (history.length>200) history.shift();
+    render(); scheduleSave();
+  }
+  function undo(){
+    const last = history.pop(); if (!last) return;
+    state[last[0]] = Math.max(0, state[last[0]] - last[1]); session = Math.max(0, session - last[1]);
+    render(); scheduleSave();
+  }
+
+  $('add').addEventListener('click', () => add(1));
+  $('add5').addEventListener('click', () => add(5));
+  $('undo').addEventListener('click', undo);
+  ['auto','normal','hour'].forEach(k => $('m-'+k).addEventListener('click', () => { mode=k; try{localStorage.setItem('chest-mode',k)}catch(e){} render(); }));
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName==='INPUT' || e.repeat) return;
+    if (e.code==='Space' || e.key==='Enter'){ if (e.target.tagName==='BUTTON' && e.target.id!=='add') return; e.preventDefault(); add(1); }
+    else if (e.key==='Backspace'){ e.preventDefault(); undo(); }
+  });
+  $('fix').addEventListener('submit', e => {
+    e.preventDefault();
+    const a = $('fixNormal').value.replace(/\s/g,''), b = $('fixHour').value.replace(/\s/g,'');
+    if (!/^\d+$/.test(a) || !/^\d+$/.test(b)) { $('fixErr').textContent='Введите целые числа без букв, например 3000.'; $('fixErr').hidden=false; return; }
+    $('fixErr').hidden = true; state = {normal:+a, hour:+b}; history = []; render(); scheduleSave();
+  });
+  ['fixNormal','fixHour'].forEach(id => $(id).addEventListener('input', () => $('fixErr').hidden = true));
+
+  render();
+  setInterval(render, 1000);
+
+  (async () => {
+    try { const s = JSON.parse(localStorage.getItem('chest-state')||'null'); if (s && typeof s.normal==='number'){ state=s; render(); } } catch(e){}
+    const [db, user] = await Promise.all([window.claude?.use?.('db'), window.claude?.use?.('user')].map(p => Promise.resolve(p).catch(()=>null)));
+    if (!db || !user) { setSync(window.claude ? 'Войдите в claude.ai, чтобы счёт сохранялся на всех устройствах' : 'Счёт хранится только в этом браузере'); return; }
+    const id = await user.id();
+    docRef = db.doc('data/users/' + id + '/chests');
+    const timer = setTimeout(() => { if (!loaded) setSync('Сохранённый счёт пока недоступен'); }, 10000);
+    docRef.onSnapshot(snap => {
+      if (!snap.fromCache) clearTimeout(timer);
+      if (dirty || writing) return;
+      loaded = true;
+      if (snap.exists){ const d = snap.data(); state = {normal:+d.normal||0, hour:+d.hour||0}; }
+      $('fixNormal').value = state.normal; $('fixHour').value = state.hour;
+      render(); setSync(snap.exists ? 'Синхронизировано' : 'Новый счёт с 3000, сохранится после первого нажатия');
+    }, () => { clearTimeout(timer); setSync('Не удалось загрузить сохранённый счёт'); });
+  })();
+})();
+</script>
+
+</body></html>
